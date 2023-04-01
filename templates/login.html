@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{{ super() }}
+{% for cat, msg in get_flashed_messages(True) %}
+<div class="flash {{cat}}">{{msg}}</div>
+{% endfor %}
+<form action="" method="post" class="form-contact">
+{{ form.hidden_tag() }}
+{{ form.username.label() }} {{ form.username() }}
+{{ form.password.label() }} {{ form.password() }}
+{{ form.remember.label() }} {{ form.remember() }}
+{{ form.submit() }}
+<hr>
+</form>
+{% endblock %}
