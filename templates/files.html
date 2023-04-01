@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<p> Signed as: {{ user.username }} </p>
+{% for cat, msg in get_flashed_messages(True) %}
+<div class="flash {{cat}}">{{ msg }}</div>
+{% endfor %}
+<form method="post" name="contact-form" enctype="multipart/form-data">
+  <input type="file" name="file">
+  <button class="btn btn-success" type="submit" name="_upload">Upload</button>
+</form>
+<a class="btn btn-primary" href="{{ url_for('logout')}}" >Logout</a>
+{% if files %}
+<table class="table align-middle mb-0 bg-white">
+  <thead class="bg-light">
+    <tr>
+      <th>Name</th>
+      <th>File type</th>
+      <th>Uploaded by</th>
+      <th>Upload time</th>
+      <th>Download</th>
+      {% if user.is_admin %}
+      <th>Delete</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in files %}
+    <tr>
+      <td>
+            <p class="fw-bold mb-1">{{ f.name }}</p>
+      </td>
+      <td>
+            <p class="fw-bold mb-1">{{ f.ftype }}</p>
+      </td>
+      <td>
+        <p class="fw-bold mb-1">{{f.fk.username}}</p>
+      </td>
+      <td>
+        <p class="fw-bold mb-1">{{ f.upload_time.strftime('%y-%m-%d %H:%M:%S')}} {{ local_zone }}</p>
+      </td>
+      <td>
+        <a href="download/{{ f.url }}" class="btn btn-primary">Download</a>
+      </td>
+      <td>
+      {% if user.is_admin %}
+        <a href="delete/{{ f.url }}"type="button" class="btn btn-danger">
+          Delete
+        </a>
+      {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<h1 class="text-center"> There is no files at now</h1>
+{% endif %}
+{% endblock %}

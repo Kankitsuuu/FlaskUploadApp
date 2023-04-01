@@ -1,4 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from app import db
 
@@ -23,9 +22,11 @@ class Files(db.Model):
     __tablename__ = 'files'
 
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.LargeBinary)
+    name = db.Column(db.String(255))
     url = db.Column(db.String(255), unique=True)
+    ftype = db.Column(db.String(10))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    upload_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     fk = db.relationship('Users', backref='users', uselist=False)
 
