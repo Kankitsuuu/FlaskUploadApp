@@ -23,8 +23,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css')}}" />
   </head>
   <body>
+    <!-- Nav -->
+    {% include 'navigation.html' %}
+    <!-- End Nav -->
     {% block content %}
-      <h1 class="text-center">{{ header }}</h1>
+
     {% endblock %}
     <!-- MDB -->
     <script type="text/javascript" src="{{ url_for('static', filename='js/mdb.min.js')}}"></script>

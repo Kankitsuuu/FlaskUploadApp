@@ -6,13 +6,12 @@ class Config:
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
-    SECRET_KEY = 'jnefj3123kafh464fiehb716231rroimk86dgjh'
-    # SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:jarsq2104@localhost:5432/test_upload_db"
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    MAX_CONTENT_LENGTH = 1024*1024*10
+    MAX_CONTENT_LENGTH = 1024*1024*16
     UPLOAD_FOLDER = './files'
-    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp3', 'wav', 'mpeg', 'doc', 'docx'}
 
 
 class ProductionConfig(Config):

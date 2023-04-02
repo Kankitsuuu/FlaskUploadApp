@@ -1,7 +1,7 @@
 import datetime
 import os
 from io import BytesIO
-
+import sqlalchemy.exc
 from flask import Flask, render_template, url_for, request, flash, redirect, session, abort, send_from_directory, \
     send_file
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
@@ -14,7 +14,7 @@ from config import DevelopmentConfig
 from flask_migrate import Migrate
 from forms import LoginForm
 from UserLogin import UserLogin
-
+import time
 
 app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
@@ -24,43 +24,27 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'Login to view closed pages'
 login_manager.login_message_category = 'success'
 
-
-
 from models import Users, Files
 
 
-@app.route("/home")
 @app.route("/")
-def index():
-    context = {
-        'title': 'Flask Upload App',
-        'header': 'Welcome to Flask Upload App!',
-        'menu': ['Пукнт 1', 'STEP 2'],
-        'profile': {'name': 'Kankitsuuu', 'url': 'profile/kankitsuuu'}
-    }
-    return render_template('content.html', **context)
-
-
-@app.route("/profile/<username>")
-def profile(username):
-    if 'userLogged' not in session or session['userLogged'] != username:
-        abort(401)
-    return f'It is {username}`s profile!'
-
-
-@app.route('/files', methods=['GET', 'POST'])
 @login_required
-def get_files():
+def home():
+    return redirect(url_for('get_files', page=1))
+
+
+@app.route('/files/<int:page>', methods=['GET', 'POST'])
+@login_required
+def get_files(page=1):
     if request.method == 'POST':
         if '_upload' in request.form:
-            print(request.files)
             file = request.files['file']
             if file and current_user.verify_filename(file.filename):
                 try:
                     filename = secure_filename(file.filename)
                     url = hashlib.sha256(file.filename.encode()).hexdigest()
                     ftype = filename.split('.')[-1].lower()
-                    name = ''.join(filename.split('.')[0:-1])
+                    name = '.'.join(filename.split('.')[0:-1])
                     new_file = Files(name=name,
                                      url=url,
                                      user_id=current_user.get_id(),
@@ -69,21 +53,25 @@ def get_files():
                                      )
                     db.session.add(new_file)
                     db.session.flush()
+                    start = time.time()
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    flash('File uploaded', 'success')
+                    t_diff = time.time() - start
+                    flash(f'File uploaded in {t_diff:.4f} sec', 'success')
+                except sqlalchemy.exc.IntegrityError:
+                    flash('File with this name already exists', 'error')
+                    db.session.rollback()
                 except Exception as e:
                     flash('Add file error', 'error')
                     print(e)
+                    print(type(e))
                     db.session.rollback()
             else:
                 flash('Invalible file type', 'error')
             db.session.commit()
-        elif '_delete' in request.form:
-            flash('Deleted', 'success')
 
     # else
-    files = Files.query.all()
-    user = Users.query.filter_by(id=current_user.get_id()).first()
+    files = Files.query.order_by(Files.upload_time.desc()).paginate(page=page, per_page=8, error_out=True, count=True)
+    user = Users.query.get(current_user.get_id())
     local_zone = get_localzone()
     return render_template('files.html', files=files, user=user, local_zone=local_zone)
 
@@ -91,7 +79,7 @@ def get_files():
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('get_files'))
+        return redirect(url_for('get_files', page=1))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -100,10 +88,8 @@ def login():
             userlogin = UserLogin().create(user)
             rm = form.remember.data
             login_user(userlogin, remember=rm)
-            return redirect(request.args.get("next") or url_for("get_files"))
-
+            return redirect(request.args.get("next") or url_for("get_files", page=1))
         flash("Incorrect login/password", "error")
-
     return render_template("login.html", title="Login", form=form)
 
 
@@ -126,7 +112,7 @@ def download(file_url):
     except Exception as e:
         print(e)
         flash("Download file error", "error")
-        return redirect(url_for('get_files'))
+        return redirect(url_for('get_files', page=1))
 
     return send_file(BytesIO(data),
                      download_name=filename, as_attachment=True)
@@ -145,12 +131,18 @@ def delete_file(file_url):
     except Exception as e:
         print(e)
         flash("Delete file error ", "error")
-    return redirect(url_for('get_files'))
+    return redirect(url_for("get_files", page=1))
+
+
+@app.errorhandler(413)
+def file_too_large(error):
+    flash('File too large. Max size: 16 Mb.', 'error')
+    return redirect(request.url)
 
 
 @login_manager.user_loader
 def load_user(user_id):
     print('Loading user')
-    user = Users.query.filter_by(id=user_id).first()
+    user = Users.query.get(user_id)
     return UserLogin().create(user)
 
