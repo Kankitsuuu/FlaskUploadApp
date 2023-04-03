@@ -36,6 +36,8 @@ def home():
 @app.route('/files/<int:page>', methods=['GET', 'POST'])
 @login_required
 def get_files(page=1):
+    start = time.time()
+    tz = pytz.timezone(os.environ.get('TZ'))
     if request.method == 'POST':
         if '_upload' in request.form:
             file = request.files['file']
@@ -45,15 +47,20 @@ def get_files(page=1):
                     url = hashlib.sha256(file.filename.encode()).hexdigest()
                     ftype = filename.split('.')[-1].lower()
                     name = '.'.join(filename.split('.')[0:-1])
+                    tz = pytz.timezone(os.environ.get('TZ'))
+                    diff = tz.utcoffset(datetime.datetime.utcnow()).seconds
+                    print(diff)
+                    local = datetime.datetime.utcnow() + datetime.timedelta(seconds=diff)
+                    print(local)
                     new_file = Files(name=name,
                                      url=url,
                                      user_id=current_user.get_id(),
                                      ftype=ftype,
-                                     upload_time=datetime.datetime.now(tz=pytz.timezone(os.environ.get('TZ')))
+                                     upload_time_utc=datetime.datetime.utcnow(),
+                                     upload_time_local=local
                                      )
                     db.session.add(new_file)
                     db.session.flush()
-                    start = time.time()
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                     t_diff = time.time() - start
                     flash(f'File uploaded in {t_diff:.4f} sec', 'success')
@@ -61,7 +68,7 @@ def get_files(page=1):
                     flash('File with this name already exists', 'error')
                     db.session.rollback()
                 except Exception as e:
-                    flash('Add file error', 'error')
+                    flash('Adding file error', 'error')
                     print(e)
                     print(type(e))
                     db.session.rollback()
@@ -70,10 +77,9 @@ def get_files(page=1):
             db.session.commit()
 
     # else
-    files = Files.query.order_by(Files.upload_time.desc()).paginate(page=page, per_page=8, error_out=True, count=True)
+    files = Files.query.order_by(Files.upload_time_utc.desc()).paginate(page=page, per_page=8, error_out=True, count=True)
     user = Users.query.get(current_user.get_id())
-    tz = pytz.timezone(os.environ.get('TZ'))
-    return render_template('files.html', files=files, user=user, tz=tz)
+    return render_template('files.html', files=files, user=user,  tz=tz)
 
 
 @app.route('/login', methods=['POST', 'GET'])

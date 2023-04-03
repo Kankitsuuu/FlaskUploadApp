@@ -37,7 +37,7 @@
         <p class="fw-bold mb-1 ">{{f.fk.username}}</p>
       </td>
       <td class="text-center">
-        <p class="fw-bold mb-1 ">{{ f.upload_time.strftime('%y-%m-%d %H:%M:%S')}} {{ tz }}</p>
+        <p class="fw-bold mb-1 ">{{ f.upload_time_local.strftime('%y-%m-%d %H:%M:%S')}} {{ tz }}</p>
       </td>
       <td class="text-center">
         <a href="{{url_for('download', file_url=f.url)}}" class="btn btn-primary ">Download</a>

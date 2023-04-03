@@ -2,16 +2,22 @@ from flask.cli import FlaskGroup
 from app import app, db
 from models import Users
 from werkzeug.security import generate_password_hash
-
+from flask import session
 cli = FlaskGroup(app)
 
 
 @cli.command("create_db")
 def create_db():
-    db.drop_all()
     db.create_all()
     db.session.commit()
     print('DB successfully created')
+
+
+@cli.command("drop_db")
+def drop_db():
+    db.drop_all()
+    db.session.commit()
+    print('DB was cleaned')
 
 
 @cli.command("create_superuser")
@@ -55,3 +61,4 @@ def add_user(is_admin: bool = False):
 
 if __name__ == "__main__":
     cli()
+

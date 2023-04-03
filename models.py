@@ -4,7 +4,6 @@ from app import db
 
 class Users(db.Model):
     __tablename__ = 'users'
-
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30), unique=True)
     password = db.Column(db.String(255))
@@ -20,13 +19,13 @@ class Users(db.Model):
 
 class Files(db.Model):
     __tablename__ = 'files'
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
     url = db.Column(db.String(255), unique=True)
     ftype = db.Column(db.String(10))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    upload_time = db.Column(db.DateTime, default=datetime.utcnow)
+    upload_time_utc = db.Column(db.DateTime)
+    upload_time_local = db.Column(db.DateTime)
 
     fk = db.relationship('Users', backref='users', uselist=False)
 
