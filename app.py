@@ -6,10 +6,10 @@ from flask import Flask, render_template, url_for, request, flash, redirect, ses
     send_file
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 import hashlib
-from tzlocal import get_localzone
+import pytz
 from config import DevelopmentConfig
 from flask_migrate import Migrate
 from forms import LoginForm
@@ -49,7 +49,7 @@ def get_files(page=1):
                                      url=url,
                                      user_id=current_user.get_id(),
                                      ftype=ftype,
-                                     upload_time=datetime.datetime.now(tz=get_localzone())
+                                     upload_time=datetime.datetime.now(tz=pytz.timezone(os.environ.get('TZ')))
                                      )
                     db.session.add(new_file)
                     db.session.flush()
@@ -72,8 +72,8 @@ def get_files(page=1):
     # else
     files = Files.query.order_by(Files.upload_time.desc()).paginate(page=page, per_page=8, error_out=True, count=True)
     user = Users.query.get(current_user.get_id())
-    local_zone = get_localzone()
-    return render_template('files.html', files=files, user=user, local_zone=local_zone)
+    tz = pytz.timezone(os.environ.get('TZ'))
+    return render_template('files.html', files=files, user=user, tz=tz)
 
 
 @app.route('/login', methods=['POST', 'GET'])

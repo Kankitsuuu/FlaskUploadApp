@@ -10,7 +10,7 @@
   </div>
 </form>
 </div>
-{% if files %}
+{% if files.items %}
 <table class="table align-middle mb-0 bg-white">
   <thead class="bg-light">
     <tr>
@@ -37,7 +37,7 @@
         <p class="fw-bold mb-1 ">{{f.fk.username}}</p>
       </td>
       <td class="text-center">
-        <p class="fw-bold mb-1 ">{{ f.upload_time.strftime('%y-%m-%d %H:%M:%S')}} {{ local_zone }}</p>
+        <p class="fw-bold mb-1 ">{{ f.upload_time.strftime('%y-%m-%d %H:%M:%S')}} {{ tz }}</p>
       </td>
       <td class="text-center">
         <a href="{{url_for('download', file_url=f.url)}}" class="btn btn-primary ">Download</a>
@@ -54,7 +54,7 @@
   </tbody>
 </table>
 {% else %}
-<h1 class="text-center">There is no files at now</h1>
+<h1 class="text-center">There are no files at now</h1>
 {% endif %}
 {% if files.pages > 1 %}
 <!-- Pagination -->
